@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Data Troopers — Recent Work Items</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+      padding: 2rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .meta span#next-refresh { font-weight: 600; color: #4b5563; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    thead {
+      background: #1e3a5f;
+      color: #ffffff;
+    }
+
+    thead th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9fafb; }
+
+    td {
+      padding: 0.7rem 1rem;
+      font-size: 0.875rem;
+      vertical-align: middle;
+    }
+
+    .id-cell a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      font-family: monospace;
+      font-size: 0.82rem;
+    }
+
+    .id-cell a:hover { text-decoration: underline; }
+
+    .title-cell { max-width: 340px; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Work Item Type badges */
+    .type-Task          { background: #dbeafe; color: #1d4ed8; }
+    .type-UserStory     { background: #d1fae5; color: #065f46; }
+    .type-SpikeStory    { background: #ede9fe; color: #5b21b6; }
+    .type-Bug           { background: #fee2e2; color: #991b1b; }
+    .type-Feature       { background: #fef3c7; color: #92400e; }
+    .type-default       { background: #f3f4f6; color: #374151; }
+
+    /* State badges */
+    .state-New              { background: #e5e7eb; color: #374151; }
+    .state-DevInProgress    { background: #dbeafe; color: #1d4ed8; }
+    .state-Active           { background: #d1fae5; color: #065f46; }
+    .state-Closed           { background: #f3f4f6; color: #9ca3af; }
+    .state-Resolved         { background: #d1fae5; color: #065f46; }
+    .state-default          { background: #fef3c7; color: #92400e; }
+
+    .date-cell { white-space: nowrap; color: #4b5563; }
+    .assignee-cell { white-space: nowrap; }
+    .unassigned { color: #9ca3af; font-style: italic; font-size: 0.8rem; }
+
+    .refresh-bar {
+      margin-top: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .progress-track {
+      flex: 1;
+      max-width: 260px;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #2563eb;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1s linear;
+    }
+
+    button#refresh-now {
+      margin-left: auto;
+      padding: 0.35rem 0.85rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    button#refresh-now:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Team Data Troopers — Recent Work Items</h1>
+    <div style="font-size:0.8rem;color:#6b7280;margin-top:0.2rem;">
+      Iteration: MSI\Team Data Troopers Backlog &nbsp;·&nbsp; Created in last 7 days
+    </div>
+  </div>
+  <div class="meta">
+    Last refreshed: <span id="last-refresh">—</span><br>
+    Next refresh: <span id="next-refresh">—</span>
+  </div>
+</header>
+
+<table id="wi-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Type</th>
+      <th>State</th>
+      <th>Created Date</th>
+      <th>Assigned To</th>
+    </tr>
+  </thead>
+  <tbody id="wi-tbody">
+    <!-- populated by JS -->
+  </tbody>
+</table>
+
+<div class="refresh-bar">
+  <span>Auto-refresh in <span id="countdown">60:00</span></span>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <button id="refresh-now" onclick="loadData()">Refresh Now</button>
+</div>
+
+<script>
+  const ORG      = 'millenniumsi';
+  const PROJECT  = 'MSI';
+  const PAT      = '';          // leave blank — relies on browser session / ADO SSO
+  const WIQL     = `SELECT [System.Id],[System.Title],[System.WorkItemType],[System.State],[System.CreatedDate],[System.AssignedTo] FROM WorkItems WHERE [System.TeamProject]='MSI' AND [System.IterationPath] UNDER 'MSI\\\\Team Data Troopers Backlog' AND [System.CreatedDate] >= @today - 7 ORDER BY [System.CreatedDate] DESC`;
+  const ADO_BASE = `https://millenniumsi.visualstudio.com`;
+  const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
+  let refreshTimer, countdownTimer, startTime, endTime;
+
+  // ── Static data seeded from the last MCP pull (shown immediately, then live data overlays) ──
+  const SEED_DATA = [
+    { id: 131900, title: "New Feature for 2026- Lot Tracking and Expiration Date Tracking", type: "Spike Story",  state: "New",             created: "2026-06-25T17:42:50.863Z", assignedTo: "" },
+    { id: 131680, title: "Update Repo and Scripts for Leprechaun",                         type: "User Story",   state: "New",             created: "2026-06-24T18:08:48.753Z", assignedTo: "" },
+    { id: 131518, title: "Data Export Tool: Booker Automation",                            type: "User Story",   state: "Dev In Progress", created: "2026-06-24T15:06:27.903Z", assignedTo: "Mike Sadowski" },
+    { id: 131133, title: "Discuss New MSI Points Export",                                  type: "Spike Story",  state: "New",             created: "2026-06-18T21:13:21.850Z", assignedTo: "" },
+    { id: 131132, title: "Meevo Conversion Checklist TTK Additions",                       type: "Task",         state: "New",             created: "2026-06-18T21:12:28.987Z", assignedTo: "Tori Laden" },
+  ];
+
+  function typeClass(t) {
+    const map = { "Task": "type-Task", "User Story": "type-UserStory", "Spike Story": "type-SpikeStory", "Bug": "type-Bug", "Feature": "type-Feature" };
+    return map[t] || "type-default";
+  }
+
+  function stateClass(s) {
+    const map = { "New": "state-New", "Dev In Progress": "state-DevInProgress", "Active": "state-Active", "Closed": "state-Closed", "Resolved": "state-Resolved" };
+    return map[s] || "state-default";
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderRows(items) {
+    const tbody = document.getElementById('wi-tbody');
+    tbody.innerHTML = items.map(item => {
+      const wiUrl = `${ADO_BASE}/${PROJECT}/_workitems/edit/${item.id}`;
+      const assignee = item.assignedTo
+        ? `<span>${item.assignedTo}</span>`
+        : `<span class="unassigned">Unassigned</span>`;
+      return `<tr>
+        <td class="id-cell"><a href="${wiUrl}" target="_blank">#${item.id}</a></td>
+        <td class="title-cell">${escHtml(item.title)}</td>
+        <td><span class="badge ${typeClass(item.type)}">${escHtml(item.type)}</span></td>
+        <td><span class="badge ${stateClass(item.state)}">${escHtml(item.state)}</span></td>
+        <td class="date-cell">${formatDate(item.created)}</td>
+        <td class="assignee-cell">${assignee}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function loadData() {
+    // Try to fetch live from ADO REST API (works if browser has an ADO session cookie)
+    try {
+      const wiqlResp = await fetch(
+        `${ADO_BASE}/${PROJECT}/_apis/wit/wiql?api-version=7.1`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(PAT ? { Authorization: 'Basic ' + btoa(':' + PAT) } : {}) },
+          body: JSON.stringify({ query: WIQL }),
+          credentials: 'include'
+        }
+      );
+      if (!wiqlResp.ok) throw new Error('WIQL ' + wiqlResp.status);
+
+      const wiqlJson = await wiqlResp.json();
+      const ids = (wiqlJson.workItems || []).map(w => w.id);
+      if (!ids.length) { renderRows([]); return; }
+
+      const fields = 'System.Id,System.Title,System.WorkItemType,System.State,System.CreatedDate,System.AssignedTo';
+      const batchResp = await fetch(
+        `${ADO_BASE}/_apis/wit/workitemsbatch?api-version=7.1`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(PAT ? { Authorization: 'Basic ' + btoa(':' + PAT) } : {}) },
+          body: JSON.stringify({ ids, fields: fields.split(',') }),
+          credentials: 'include'
+        }
+      );
+      if (!batchResp.ok) throw new Error('batch ' + batchResp.status);
+
+      const batchJson = await batchResp.json();
+      const items = (batchJson.value || []).map(wi => ({
+        id: wi.fields['System.Id'],
+        title: wi.fields['System.Title'] || '',
+        type: wi.fields['System.WorkItemType'] || '',
+        state: wi.fields['System.State'] || '',
+        created: wi.fields['System.CreatedDate'] || '',
+        assignedTo: (wi.fields['System.AssignedTo'] || {}).displayName || wi.fields['System.AssignedTo'] || '',
+      }));
+      items.sort((a, b) => new Date(b.created) - new Date(a.created));
+      renderRows(items);
+    } catch (e) {
+      // Fall back to seed data if API call fails (e.g. no session)
+      console.warn('Live fetch failed, showing cached data:', e);
+      renderRows(SEED_DATA);
+    }
+
+    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+    scheduleNextRefresh();
+  }
+
+  function scheduleNextRefresh() {
+    clearTimeout(refreshTimer);
+    clearInterval(countdownTimer);
+    startTime = Date.now();
+    endTime = startTime + REFRESH_INTERVAL_MS;
+
+    refreshTimer = setTimeout(loadData, REFRESH_INTERVAL_MS);
+
+    countdownTimer = setInterval(() => {
+      const remaining = Math.max(0, endTime - Date.now());
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      document.getElementById('countdown').textContent =
+        String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      document.getElementById('next-refresh').textContent =
+        new Date(endTime).toLocaleTimeString();
+      const pct = ((REFRESH_INTERVAL_MS - remaining) / REFRESH_INTERVAL_MS) * 100;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      if (remaining === 0) clearInterval(countdownTimer);
+    }, 1000);
+  }
+
+  // Initial render from seed data immediately, then try live
+  renderRows(SEED_DATA);
+  document.getElementById('last-refresh').textContent = 'cached (loading…)';
+  loadData();
+</script>
+</body>
+</html>
