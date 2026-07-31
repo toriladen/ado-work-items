@@ -199,7 +199,15 @@
   const PAT      = '';          // leave blank — relies on browser session / ADO SSO
   const WIQL     = `SELECT [System.Id],[System.Title],[System.WorkItemType],[System.State],[System.CreatedDate],[System.AssignedTo] FROM WorkItems WHERE [System.TeamProject]='MSI' AND [System.IterationPath] UNDER 'MSI\\\\Team Data Troopers Backlog' AND [System.CreatedDate] >= @today - 7 ORDER BY [System.CreatedDate] DESC`;
   const ADO_BASE = `https://millenniumsi.visualstudio.com`;
-  const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+  function msUntilNext4pmET() {
+  const now = new Date();
+  const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const target = new Date(etNow);
+  target.setHours(16, 0, 0, 0);
+  if (etNow >= target) target.setDate(target.getDate() + 1);
+  return target - etNow;
+}
+const REFRESH_INTERVAL_MS = msUntilNext4pmET();
 
   let refreshTimer, countdownTimer, startTime, endTime;
 
