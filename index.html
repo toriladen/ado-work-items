@@ -35,6 +35,7 @@
     }
 
     .meta span#next-refresh { font-weight: 600; color: #4b5563; }
+    .meta span#data-as-of   { font-weight: 600; color: #4b5563; }
 
     table {
       width: 100%;
@@ -115,6 +116,13 @@
     .assignee-cell { white-space: nowrap; }
     .unassigned { color: #9ca3af; font-style: italic; font-size: 0.8rem; }
 
+    .empty-row td {
+      text-align: center;
+      color: #9ca3af;
+      font-style: italic;
+      padding: 1.5rem 1rem;
+    }
+
     .refresh-bar {
       margin-top: 1.25rem;
       display: flex;
@@ -166,7 +174,7 @@
     </div>
   </div>
   <div class="meta">
-    Last refreshed: <span id="last-refresh">—</span><br>
+    Data as of: <span id="data-as-of">—</span><br>
     Next refresh: <span id="next-refresh">—</span>
   </div>
 </header>
@@ -183,39 +191,33 @@
     </tr>
   </thead>
   <tbody id="wi-tbody">
-    <!-- populated by JS -->
+    <!-- populated by JS from WORK_ITEMS below -->
   </tbody>
 </table>
 
 <div class="refresh-bar">
-  <span>Auto-refresh in <span id="countdown">60:00</span></span>
+  <span>Auto-refresh in <span id="countdown">--:--:--</span></span>
   <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-  <button id="refresh-now" onclick="loadData()">Refresh Now</button>
+  <button id="refresh-now" onclick="hardReload()">Refresh Now</button>
 </div>
 
 <script>
-  const ORG      = 'millenniumsi';
   const PROJECT  = 'MSI';
-  const PAT      = '';          // leave blank — relies on browser session / ADO SSO
-  const WIQL     = `SELECT [System.Id],[System.Title],[System.WorkItemType],[System.State],[System.CreatedDate],[System.AssignedTo] FROM WorkItems WHERE [System.TeamProject]='MSI' AND [System.IterationPath] UNDER 'MSI\\\\Team Data Troopers Backlog' AND [System.CreatedDate] >= @today - 7 ORDER BY [System.CreatedDate] DESC`;
-  const ADO_BASE = `https://millenniumsi.visualstudio.com`;
-  function msUntilNext4pmET() {
-  const now = new Date();
-  const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const target = new Date(etNow);
-  target.setHours(16, 0, 0, 0);
-  if (etNow >= target) target.setDate(target.getDate() + 1);
-  return target - etNow;
-}
-const REFRESH_INTERVAL_MS = msUntilNext4pmET();
+  const ADO_BASE = 'https://millenniumsi.visualstudio.com';
 
-  let refreshTimer, countdownTimer, startTime, endTime;
-
-  // ── Static data seeded from the last MCP pull (shown immediately, then live data overlays) ──
-  const SEED_DATA = [
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Data below is written by refresh.py during the GitHub Actions run, then
+  // deployed by Netlify. The page does NOT call ADO at runtime — a static page
+  // has no ADO credentials, so any browser-side query would always fail.
+  // DATA_AS_OF is stamped at the same moment, so staleness is visible on screen.
+  // ─────────────────────────────────────────────────────────────────────────────
+  const DATA_AS_OF = "not yet refreshed";
+  const WORK_ITEMS = [
     { id: 138784, title: "Boulevard Update - Product Screen: Need to update Playbook and Mapping", type: "Task", state: "New", created: "2026-08-21T20:51:07.89Z", assignedTo: "" },
     { id: 138779, title: "DataMate - Boulevard - Add ThirdpartyID and Appointments Include Current Day", type: "User Story", state: "New", created: "2026-08-21T20:18:28.003Z", assignedTo: "" },
   ];
+
+  let refreshTimer, countdownTimer;
 
   function typeClass(t) {
     const map = { "Task": "type-Task", "User Story": "type-UserStory", "Spike Story": "type-SpikeStory", "Bug": "type-Bug", "Feature": "type-Feature" };
@@ -227,21 +229,30 @@ const REFRESH_INTERVAL_MS = msUntilNext4pmET();
     return map[s] || "state-default";
   }
 
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
   function formatDate(iso) {
     const d = new Date(iso);
+    if (isNaN(d)) return escHtml(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   function renderRows(items) {
     const tbody = document.getElementById('wi-tbody');
+    if (!items.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No work items created in the last 7 days.</td></tr>';
+      return;
+    }
     tbody.innerHTML = items.map(item => {
       const wiUrl = `${ADO_BASE}/${PROJECT}/_workitems/edit/${item.id}`;
       const assignee = item.assignedTo
-        ? `<span>${item.assignedTo}</span>`
+        ? `<span>${escHtml(item.assignedTo)}</span>`
         : `<span class="unassigned">Unassigned</span>`;
       return `<tr>
-        <td class="id-cell"><a href="${wiUrl}" target="_blank">#${item.id}</a></td>
+        <td class="id-cell"><a href="${wiUrl}" target="_blank" rel="noopener">#${item.id}</a></td>
         <td class="title-cell">${escHtml(item.title)}</td>
         <td><span class="badge ${typeClass(item.type)}">${escHtml(item.type)}</span></td>
         <td><span class="badge ${stateClass(item.state)}">${escHtml(item.state)}</span></td>
@@ -251,87 +262,57 @@ const REFRESH_INTERVAL_MS = msUntilNext4pmET();
     }).join('');
   }
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function showDataAsOf() {
+    const el = document.getElementById('data-as-of');
+    const d = new Date(DATA_AS_OF);
+    el.textContent = isNaN(d) ? DATA_AS_OF : d.toLocaleString();
   }
 
-  async function loadData() {
-    // Try to fetch live from ADO REST API (works if browser has an ADO session cookie)
-    try {
-      const wiqlResp = await fetch(
-        `${ADO_BASE}/${PROJECT}/_apis/wit/wiql?api-version=7.1`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(PAT ? { Authorization: 'Basic ' + btoa(':' + PAT) } : {}) },
-          body: JSON.stringify({ query: WIQL }),
-          credentials: 'include'
-        }
-      );
-      if (!wiqlResp.ok) throw new Error('WIQL ' + wiqlResp.status);
+  // Milliseconds until the next 4:00 PM America/New_York (handles EDT/EST).
+  function msUntilNext4pmET() {
+    const now = new Date();
+    const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const target = new Date(etNow);
+    target.setHours(16, 0, 0, 0);
+    if (etNow >= target) target.setDate(target.getDate() + 1);
+    return target - etNow;
+  }
 
-      const wiqlJson = await wiqlResp.json();
-      const ids = (wiqlJson.workItems || []).map(w => w.id);
-      if (!ids.length) { renderRows([]); return; }
-
-      const fields = 'System.Id,System.Title,System.WorkItemType,System.State,System.CreatedDate,System.AssignedTo';
-      const batchResp = await fetch(
-        `${ADO_BASE}/_apis/wit/workitemsbatch?api-version=7.1`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(PAT ? { Authorization: 'Basic ' + btoa(':' + PAT) } : {}) },
-          body: JSON.stringify({ ids, fields: fields.split(',') }),
-          credentials: 'include'
-        }
-      );
-      if (!batchResp.ok) throw new Error('batch ' + batchResp.status);
-
-      const batchJson = await batchResp.json();
-      const items = (batchJson.value || []).map(wi => ({
-        id: wi.fields['System.Id'],
-        title: wi.fields['System.Title'] || '',
-        type: wi.fields['System.WorkItemType'] || '',
-        state: wi.fields['System.State'] || '',
-        created: wi.fields['System.CreatedDate'] || '',
-        assignedTo: (wi.fields['System.AssignedTo'] || {}).displayName || wi.fields['System.AssignedTo'] || '',
-      }));
-      items.sort((a, b) => new Date(b.created) - new Date(a.created));
-      renderRows(items);
-    } catch (e) {
-      // Fall back to seed data if API call fails (e.g. no session)
-      console.warn('Live fetch failed, showing cached data:', e);
-      renderRows(SEED_DATA);
-    }
-
-    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
-    scheduleNextRefresh();
+  // Re-request the page so we pick up the freshly deployed WORK_ITEMS.
+  // Re-rendering the in-memory array would show the same stale rows forever —
+  // which is what made an embedded SharePoint iframe go stale for days.
+  function hardReload() {
+    const u = new URL(window.location.href);
+    u.searchParams.set('_', Date.now().toString());  // bypass iframe/CDN cache
+    window.location.replace(u.toString());
   }
 
   function scheduleNextRefresh() {
     clearTimeout(refreshTimer);
     clearInterval(countdownTimer);
-    startTime = Date.now();
-    endTime = startTime + REFRESH_INTERVAL_MS;
 
-    refreshTimer = setTimeout(loadData, REFRESH_INTERVAL_MS);
+    const wait = msUntilNext4pmET();   // recomputed each cycle, so it never drifts
+    const endTime = Date.now() + wait;
+
+    refreshTimer = setTimeout(hardReload, wait);
+    document.getElementById('next-refresh').textContent = new Date(endTime).toLocaleString();
 
     countdownTimer = setInterval(() => {
       const remaining = Math.max(0, endTime - Date.now());
-      const m = Math.floor(remaining / 60000);
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
       const s = Math.floor((remaining % 60000) / 1000);
       document.getElementById('countdown').textContent =
-        String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-      document.getElementById('next-refresh').textContent =
-        new Date(endTime).toLocaleTimeString();
-      const pct = ((REFRESH_INTERVAL_MS - remaining) / REFRESH_INTERVAL_MS) * 100;
-      document.getElementById('progress-fill').style.width = pct + '%';
+        String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      document.getElementById('progress-fill').style.width =
+        (((wait - remaining) / wait) * 100) + '%';
       if (remaining === 0) clearInterval(countdownTimer);
     }, 1000);
   }
 
-  // Initial render from seed data immediately, then try live
-  renderRows(SEED_DATA);
-  document.getElementById('last-refresh').textContent = 'cached (loading…)';
-  loadData();
+  renderRows(WORK_ITEMS);
+  showDataAsOf();
+  scheduleNextRefresh();
 </script>
 </body>
 </html>
