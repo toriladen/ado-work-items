@@ -1,8 +1,22 @@
 [build]
   publish = "."
+  functions = "netlify/functions"
 
+# Friendly path for the ADO query function.
+[[redirects]]
+  from = "/api/workitems"
+  to = "/.netlify/functions/workitems"
+  status = 200
+
+# Allow the SharePoint site to embed this page in an iframe.
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "ALLOW-FROM https://millenniumsi.sharepoint.com"
     Content-Security-Policy = "frame-ancestors 'self' https://millenniumsi.sharepoint.com"
+
+# The page must never be served from cache, or a stale copy could pin old data.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"

@@ -16,15 +16,18 @@
 
     header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 1.5rem;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
     }
 
-    h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #111827;
+    h1 { font-size: 1.4rem; font-weight: 700; color: #111827; }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
     }
 
     .meta {
@@ -32,10 +35,29 @@
       color: #6b7280;
       text-align: right;
       line-height: 1.6;
+      white-space: nowrap;
     }
 
-    .meta span#next-refresh { font-weight: 600; color: #4b5563; }
-    .meta span#data-as-of   { font-weight: 600; color: #4b5563; }
+    .meta strong { font-weight: 600; color: #4b5563; }
+
+    /* Error banner — shown only when the ADO query fails. */
+    #banner {
+      display: none;
+      align-items: flex-start;
+      gap: 0.6rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-left: 4px solid #dc2626;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
+      color: #991b1b;
+    }
+
+    #banner.visible { display: flex; }
+    #banner .b-title { font-weight: 700; display: block; margin-bottom: 0.15rem; }
+    #banner .b-detail { color: #b91c1c; font-size: 0.78rem; }
 
     table {
       width: 100%;
@@ -46,10 +68,10 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
 
-    thead {
-      background: #1e3a5f;
-      color: #ffffff;
-    }
+    /* Dim the rows when what's on screen is known to be out of date. */
+    table.stale { opacity: 0.55; }
+
+    thead { background: #1e3a5f; color: #ffffff; }
 
     thead th {
       padding: 0.75rem 1rem;
@@ -69,11 +91,7 @@
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: #f9fafb; }
 
-    td {
-      padding: 0.7rem 1rem;
-      font-size: 0.875rem;
-      vertical-align: middle;
-    }
+    td { padding: 0.7rem 1rem; font-size: 0.875rem; vertical-align: middle; }
 
     .id-cell a {
       color: #2563eb;
@@ -85,7 +103,7 @@
 
     .id-cell a:hover { text-decoration: underline; }
 
-    .title-cell { max-width: 340px; }
+    .title-cell { max-width: 380px; }
 
     .badge {
       display: inline-block;
@@ -96,31 +114,29 @@
       white-space: nowrap;
     }
 
-    /* Work Item Type badges */
-    .type-Task          { background: #dbeafe; color: #1d4ed8; }
-    .type-UserStory     { background: #d1fae5; color: #065f46; }
-    .type-SpikeStory    { background: #ede9fe; color: #5b21b6; }
-    .type-Bug           { background: #fee2e2; color: #991b1b; }
-    .type-Feature       { background: #fef3c7; color: #92400e; }
-    .type-default       { background: #f3f4f6; color: #374151; }
+    .type-Task       { background: #dbeafe; color: #1d4ed8; }
+    .type-UserStory  { background: #d1fae5; color: #065f46; }
+    .type-SpikeStory { background: #ede9fe; color: #5b21b6; }
+    .type-Bug        { background: #fee2e2; color: #991b1b; }
+    .type-Feature    { background: #fef3c7; color: #92400e; }
+    .type-default    { background: #f3f4f6; color: #374151; }
 
-    /* State badges */
-    .state-New              { background: #e5e7eb; color: #374151; }
-    .state-DevInProgress    { background: #dbeafe; color: #1d4ed8; }
-    .state-Active           { background: #d1fae5; color: #065f46; }
-    .state-Closed           { background: #f3f4f6; color: #9ca3af; }
-    .state-Resolved         { background: #d1fae5; color: #065f46; }
-    .state-default          { background: #fef3c7; color: #92400e; }
+    .state-New           { background: #e5e7eb; color: #374151; }
+    .state-DevInProgress { background: #dbeafe; color: #1d4ed8; }
+    .state-Active        { background: #d1fae5; color: #065f46; }
+    .state-Closed        { background: #f3f4f6; color: #9ca3af; }
+    .state-Resolved      { background: #d1fae5; color: #065f46; }
+    .state-default       { background: #fef3c7; color: #92400e; }
 
     .date-cell { white-space: nowrap; color: #4b5563; }
     .assignee-cell { white-space: nowrap; }
     .unassigned { color: #9ca3af; font-style: italic; font-size: 0.8rem; }
 
-    .empty-row td {
+    .message-row td {
       text-align: center;
       color: #9ca3af;
       font-style: italic;
-      padding: 1.5rem 1rem;
+      padding: 1.75rem 1rem;
     }
 
     .refresh-bar {
@@ -134,7 +150,7 @@
 
     .progress-track {
       flex: 1;
-      max-width: 260px;
+      max-width: 240px;
       height: 4px;
       background: #e5e7eb;
       border-radius: 2px;
@@ -161,7 +177,8 @@
       font-family: inherit;
     }
 
-    button#refresh-now:hover { background: #1d4ed8; }
+    button#refresh-now:hover:not(:disabled) { background: #1d4ed8; }
+    button#refresh-now:disabled { background: #9ca3af; cursor: default; }
   </style>
 </head>
 <body>
@@ -169,15 +186,23 @@
 <header>
   <div>
     <h1>Team Data Troopers — Recent Work Items</h1>
-    <div style="font-size:0.8rem;color:#6b7280;margin-top:0.2rem;">
-      Iteration: MSI\Team Data Troopers Backlog &nbsp;·&nbsp; Created in last 7 days
+    <div class="subtitle">
+      Iteration: MSI\Team Data Troopers Backlog &nbsp;·&nbsp; Created in the last 7 days
     </div>
   </div>
   <div class="meta">
-    Data as of: <span id="data-as-of">—</span><br>
-    Next refresh: <span id="next-refresh">—</span>
+    Data as of: <strong id="data-as-of">loading…</strong><br>
+    Next check: <strong id="next-refresh">—</strong>
   </div>
 </header>
+
+<div id="banner">
+  <span>⚠</span>
+  <div>
+    <span class="b-title" id="banner-title"></span>
+    <span class="b-detail" id="banner-detail"></span>
+  </div>
+</div>
 
 <table id="wi-table">
   <thead>
@@ -191,50 +216,46 @@
     </tr>
   </thead>
   <tbody id="wi-tbody">
-    <!-- populated by JS from WORK_ITEMS below -->
+    <tr class="message-row"><td colspan="6">Loading work items from Azure DevOps…</td></tr>
   </tbody>
 </table>
 
 <div class="refresh-bar">
-  <span>Auto-refresh in <span id="countdown">--:--:--</span></span>
+  <span>Next check in <span id="countdown">--:--</span></span>
   <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-  <button id="refresh-now" onclick="hardReload()">Refresh Now</button>
+  <button id="refresh-now">Refresh Now</button>
 </div>
 
 <script>
-  const PROJECT  = 'MSI';
+  // The work items are fetched from /api/workitems on every load and every
+  // POLL_MS thereafter. Nothing is baked into this file, so the page is current
+  // whenever it is opened — no rebuild, no redeploy, no commit.
+  const API = '/api/workitems';
+  const POLL_MS = 15 * 60 * 1000;   // 15 minutes
   const ADO_BASE = 'https://millenniumsi.visualstudio.com';
+  const PROJECT = 'MSI';
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Data below is written by refresh.py during the GitHub Actions run, then
-  // deployed by Netlify. The page does NOT call ADO at runtime — a static page
-  // has no ADO credentials, so any browser-side query would always fail.
-  // DATA_AS_OF is stamped at the same moment, so staleness is visible on screen.
-  // ─────────────────────────────────────────────────────────────────────────────
-  const DATA_AS_OF = "2026-08-24T20:36:28Z";
-  const WORK_ITEMS = [
-    { id: 138824, title: "Vagaro - Service Screen Updated - Unable to Copy Services From Service Screen", type: "Task", state: "New", created: "2026-08-24T19:51:03.163Z", assignedTo: "" },
-    { id: 138814, title: "Automate Usage with Vagaro 2nd Gen yields error:  Something went wrong when opening your profile. Some features may be unavailable.", type: "Defect", state: "New", created: "2026-08-24T16:04:40.737Z", assignedTo: "" },
-    { id: 138812, title: "DataMate - Boulevard Appointment Transformation does not include current day appointments", type: "Bug", state: "Ready For Merge", created: "2026-08-24T15:27:28.96Z", assignedTo: "Emir Guerrero" },
-    { id: 138811, title: "Investigate Boulevard Changes in Product Screen", type: "Spike Story", state: "New", created: "2026-08-24T15:15:53.987Z", assignedTo: "Tori Laden" },
-    { id: 138784, title: "Boulevard Update - Product Screen: Need to update Playbook and Mapping", type: "Task", state: "Blocked", created: "2026-08-21T20:51:07.89Z", assignedTo: "" },
-    { id: 138779, title: "DataMate - Boulevard - Add ThirdpartyID and Appointments Include Current Day", type: "User Story", state: "Ready For Merge", created: "2026-08-21T20:18:28.003Z", assignedTo: "Emir Guerrero" },
-  ];
+  const el = (id) => document.getElementById(id);
+  let countdownTimer, pollTimer, nextCheckAt, haveData = false;
 
-  let refreshTimer, countdownTimer;
+  const TYPE_CLASS = {
+    'Task': 'type-Task',
+    'User Story': 'type-UserStory',
+    'Spike Story': 'type-SpikeStory',
+    'Bug': 'type-Bug',
+    'Feature': 'type-Feature',
+  };
 
-  function typeClass(t) {
-    const map = { "Task": "type-Task", "User Story": "type-UserStory", "Spike Story": "type-SpikeStory", "Bug": "type-Bug", "Feature": "type-Feature" };
-    return map[t] || "type-default";
-  }
-
-  function stateClass(s) {
-    const map = { "New": "state-New", "Dev In Progress": "state-DevInProgress", "Active": "state-Active", "Closed": "state-Closed", "Resolved": "state-Resolved" };
-    return map[s] || "state-default";
-  }
+  const STATE_CLASS = {
+    'New': 'state-New',
+    'Dev In Progress': 'state-DevInProgress',
+    'Active': 'state-Active',
+    'Closed': 'state-Closed',
+    'Resolved': 'state-Resolved',
+  };
 
   function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function formatDate(iso) {
@@ -245,78 +266,99 @@
   }
 
   function renderRows(items) {
-    const tbody = document.getElementById('wi-tbody');
+    const tbody = el('wi-tbody');
+
     if (!items.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No work items created in the last 7 days.</td></tr>';
+      tbody.innerHTML =
+        '<tr class="message-row"><td colspan="6">No work items created in the last 7 days.</td></tr>';
       return;
     }
-    tbody.innerHTML = items.map(item => {
-      const wiUrl = `${ADO_BASE}/${PROJECT}/_workitems/edit/${item.id}`;
+
+    tbody.innerHTML = items.map((item) => {
+      const url = `${ADO_BASE}/${PROJECT}/_workitems/edit/${item.id}`;
       const assignee = item.assignedTo
         ? `<span>${escHtml(item.assignedTo)}</span>`
-        : `<span class="unassigned">Unassigned</span>`;
+        : '<span class="unassigned">Unassigned</span>';
       return `<tr>
-        <td class="id-cell"><a href="${wiUrl}" target="_blank" rel="noopener">#${item.id}</a></td>
+        <td class="id-cell"><a href="${url}" target="_blank" rel="noopener">#${item.id}</a></td>
         <td class="title-cell">${escHtml(item.title)}</td>
-        <td><span class="badge ${typeClass(item.type)}">${escHtml(item.type)}</span></td>
-        <td><span class="badge ${stateClass(item.state)}">${escHtml(item.state)}</span></td>
+        <td><span class="badge ${TYPE_CLASS[item.type] || 'type-default'}">${escHtml(item.type)}</span></td>
+        <td><span class="badge ${STATE_CLASS[item.state] || 'state-default'}">${escHtml(item.state)}</span></td>
         <td class="date-cell">${formatDate(item.created)}</td>
         <td class="assignee-cell">${assignee}</td>
       </tr>`;
     }).join('');
   }
 
-  function showDataAsOf() {
-    const el = document.getElementById('data-as-of');
-    const d = new Date(DATA_AS_OF);
-    el.textContent = isNaN(d) ? DATA_AS_OF : d.toLocaleString();
+  function showError(title, detail) {
+    el('banner-title').textContent = title;
+    el('banner-detail').textContent = detail || '';
+    el('banner').classList.add('visible');
+    // Anything already on screen is now known to be out of date.
+    el('wi-table').classList.add('stale');
+    if (!haveData) {
+      el('wi-tbody').innerHTML =
+        '<tr class="message-row"><td colspan="6">Could not load work items.</td></tr>';
+    }
   }
 
-  // Milliseconds until the next 4:00 PM America/New_York (handles EDT/EST).
-  function msUntilNext4pmET() {
-    const now = new Date();
-    const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    const target = new Date(etNow);
-    target.setHours(16, 0, 0, 0);
-    if (etNow >= target) target.setDate(target.getDate() + 1);
-    return target - etNow;
+  function clearError() {
+    el('banner').classList.remove('visible');
+    el('wi-table').classList.remove('stale');
   }
 
-  // Re-request the page so we pick up the freshly deployed WORK_ITEMS.
-  // Re-rendering the in-memory array would show the same stale rows forever —
-  // which is what made an embedded SharePoint iframe go stale for days.
-  function hardReload() {
-    const u = new URL(window.location.href);
-    u.searchParams.set('_', Date.now().toString());  // bypass iframe/CDN cache
-    window.location.replace(u.toString());
+  async function loadData() {
+    const btn = el('refresh-now');
+    btn.disabled = true;
+    btn.textContent = 'Refreshing…';
+
+    try {
+      // Cache-bust so neither the CDN nor the SharePoint iframe can serve an old copy.
+      const res = await fetch(`${API}?t=${Date.now()}`, { cache: 'no-store' });
+      const body = await res.json().catch(() => null);
+
+      if (!res.ok || !body || !body.ok) {
+        showError(
+          (body && body.error) || `Request failed (HTTP ${res.status}).`,
+          (body && (body.hint || body.detail)) || ''
+        );
+      } else {
+        renderRows(body.items);
+        haveData = true;
+        clearError();
+        // Stamped by the server at query time, so it reflects the data, not the clock.
+        el('data-as-of').textContent = new Date(body.fetchedAt).toLocaleString();
+      }
+    } catch (e) {
+      showError('Could not reach the work item service.', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Refresh Now';
+      scheduleNextCheck();
+    }
   }
 
-  function scheduleNextRefresh() {
-    clearTimeout(refreshTimer);
+  function scheduleNextCheck() {
+    clearTimeout(pollTimer);
     clearInterval(countdownTimer);
 
-    const wait = msUntilNext4pmET();   // recomputed each cycle, so it never drifts
-    const endTime = Date.now() + wait;
-
-    refreshTimer = setTimeout(hardReload, wait);
-    document.getElementById('next-refresh').textContent = new Date(endTime).toLocaleString();
+    nextCheckAt = Date.now() + POLL_MS;
+    pollTimer = setTimeout(loadData, POLL_MS);
+    el('next-refresh').textContent = new Date(nextCheckAt).toLocaleTimeString();
 
     countdownTimer = setInterval(() => {
-      const remaining = Math.max(0, endTime - Date.now());
-      const h = Math.floor(remaining / 3600000);
-      const m = Math.floor((remaining % 3600000) / 60000);
+      const remaining = Math.max(0, nextCheckAt - Date.now());
+      const m = Math.floor(remaining / 60000);
       const s = Math.floor((remaining % 60000) / 1000);
-      document.getElementById('countdown').textContent =
-        String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-      document.getElementById('progress-fill').style.width =
-        (((wait - remaining) / wait) * 100) + '%';
+      el('countdown').textContent =
+        String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      el('progress-fill').style.width = (((POLL_MS - remaining) / POLL_MS) * 100) + '%';
       if (remaining === 0) clearInterval(countdownTimer);
     }, 1000);
   }
 
-  renderRows(WORK_ITEMS);
-  showDataAsOf();
-  scheduleNextRefresh();
+  el('refresh-now').addEventListener('click', loadData);
+  loadData();
 </script>
 </body>
 </html>
