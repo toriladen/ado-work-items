@@ -24,6 +24,9 @@ const WIQL =
   `WHERE [System.TeamProject] = '${PROJECT}' ` +
   `AND [System.IterationPath] UNDER '${ITERATION}' ` +
   'AND [System.CreatedDate] >= @today - 7 ' +
+  // Removed items are deleted/abandoned work (test items, mistakes) and are
+  // filtered out here rather than in the page, so they never cross the wire.
+  "AND [System.State] <> 'Removed' " +
   'ORDER BY [System.CreatedDate] DESC';
 
 const FIELDS = [
