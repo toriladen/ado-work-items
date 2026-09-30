@@ -19,14 +19,18 @@ const ITERATION = 'MSI\\Team Data Troopers Backlog'; // one literal backslash at
 const TIMEOUT_MS = 10000;
 const MAX_ITEMS = 200; // the workitemsbatch endpoint accepts at most 200 ids
 
+// States to hide from the dashboard. Add to this list to exclude more.
+const EXCLUDED_STATES = ['Removed', 'Canceled'];
+
 const WIQL =
   'SELECT [System.Id] FROM WorkItems ' +
   `WHERE [System.TeamProject] = '${PROJECT}' ` +
   `AND [System.IterationPath] UNDER '${ITERATION}' ` +
   'AND [System.CreatedDate] >= @today - 7 ' +
-  // Removed items are deleted/abandoned work (test items, mistakes) and are
-  // filtered out here rather than in the page, so they never cross the wire.
-  "AND [System.State] <> 'Removed' " +
+  // Dead states — abandoned work, test items, mistakes. Filtered here rather
+  // than in the page so they never cross the wire. Note the spelling:
+  // this project uses "Canceled" (one L), which is the value ADO accepts.
+  `AND [System.State] NOT IN (${EXCLUDED_STATES.map((s) => `'${s}'`).join(', ')}) ` +
   'ORDER BY [System.CreatedDate] DESC';
 
 const FIELDS = [
